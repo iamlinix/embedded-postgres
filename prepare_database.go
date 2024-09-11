@@ -48,23 +48,11 @@ func defaultInitDatabase(binaryExtractLocation, runtimePath, pgDataDir, runAsUse
 	postgresInitDBProcess.Stdout = logger
 
 	if runAsUser != "" {
-		err = chown(passwordFile, runAsUser)
+		err = os.Chmod(postgresInitDBBinary, 0777)
 		if err != nil {
 			return err
 		}
 
-		err = chown(runtimePath, runAsUser)
-		if err != nil {
-			return err
-		}
-
-		err = setRunAs(postgresInitDBProcess, runAsUser)
-		if err != nil {
-			return err
-		}
-	}
-
-	if runAsUser != "" {
 		err = chown(passwordFile, runAsUser)
 		if err != nil {
 			return err
