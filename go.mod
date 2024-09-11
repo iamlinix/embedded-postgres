@@ -1,4 +1,4 @@
-module github.com/fergusstrange/embedded-postgres
+module github.com/iamlinix/embedded-postgres
 
 go 1.18
 

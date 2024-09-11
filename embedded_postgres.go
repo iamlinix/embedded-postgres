@@ -107,11 +107,13 @@ func (ep *EmbeddedPostgres) Start() error {
 
 	if !reuseData {
 		if err := ep.cleanDataDirectoryAndInit(); err != nil {
+			ep.syncedLogger.flush()
 			return err
 		}
 	}
 
 	if err := startPostgres(ep); err != nil {
+		ep.syncedLogger.flush()
 		return err
 	}
 
@@ -167,7 +169,7 @@ func (ep *EmbeddedPostgres) cleanDataDirectoryAndInit() error {
 		return fmt.Errorf("unable to clean up data directory %s with error: %s", ep.config.dataPath, err)
 	}
 
-	if err := ep.initDatabase(ep.config.binariesPath, ep.config.runtimePath, ep.config.dataPath, ep.config.username, ep.config.password, ep.config.locale, ep.config.encoding, ep.syncedLogger.file); err != nil {
+	if err := ep.initDatabase(ep.config.binariesPath, ep.config.runtimePath, ep.config.dataPath, ep.config.runAsUser, ep.config.username, ep.config.password, ep.config.locale, ep.config.encoding, ep.syncedLogger.file); err != nil {
 		return err
 	}
 
@@ -181,6 +183,7 @@ func (ep *EmbeddedPostgres) Stop() error {
 	}
 
 	if err := stopPostgres(ep); err != nil {
+		ep.syncedLogger.flush()
 		return err
 	}
 
@@ -210,6 +213,13 @@ func startPostgres(ep *EmbeddedPostgres) error {
 	postgresProcess.Stdout = ep.syncedLogger.file
 	postgresProcess.Stderr = ep.syncedLogger.file
 
+	if ep.config.runAsUser != "" {
+		err := setRunAs(postgresProcess, ep.config.runAsUser)
+		if err != nil {
+			return err
+		}
+	}
+
 	if err := postgresProcess.Run(); err != nil {
 		_ = ep.syncedLogger.flush()
 		logContent, _ := readLogsOrTimeout(ep.syncedLogger.file)
@@ -226,6 +236,13 @@ func stopPostgres(ep *EmbeddedPostgres) error {
 		"-D", ep.config.dataPath)
 	postgresProcess.Stderr = ep.syncedLogger.file
 	postgresProcess.Stdout = ep.syncedLogger.file
+
+	if ep.config.runAsUser != "" {
+		err := setRunAs(postgresProcess, ep.config.runAsUser)
+		if err != nil {
+			return err
+		}
+	}
 
 	if err := postgresProcess.Run(); err != nil {
 		return err
