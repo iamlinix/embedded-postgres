@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"crypto/sha256"
 	"encoding/hex"
-	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -358,6 +359,7 @@ func Test_defaultRemoteFetchStrategyWithExistingDownload(t *testing.T) {
 	assert.NoError(t, err)
 	assert.FileExists(t, cacheLocation)
 	out1, err := os.ReadFile(cacheLocation)
+	assert.NoError(t, err)
 
 	// write some bad data to the file, this helps us test that the file is overwritten
 	err = os.WriteFile(cacheLocation, []byte("invalid"), 0600)
@@ -371,6 +373,7 @@ func Test_defaultRemoteFetchStrategyWithExistingDownload(t *testing.T) {
 	// ensure that the file contents are the same from both downloads, and that it doesn't contain the `invalid` data.
 	out2, err := os.ReadFile(cacheLocation)
 	assert.Equal(t, out1, out2)
+	assert.NoError(t, err)
 }
 
 func Test_defaultRemoteFetchStrategy_whenContentLengthNotSet(t *testing.T) {

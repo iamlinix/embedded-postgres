@@ -4,16 +4,14 @@
 package embeddedpostgres
 
 import (
-	"io/ioutil"
 	"os"
-	"os/user"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_defaultInitDatabase_RunAsNotSupported(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "prepare_database_test")
+	tempDir, err := os.MkdirTemp("", "prepare_database_test")
 	if err != nil {
 		panic(err)
 	}

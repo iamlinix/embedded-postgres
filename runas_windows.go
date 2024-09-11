@@ -9,10 +9,10 @@ var (
 	errNotSupported = fmt.Errorf("RunAsUser config parameter not supported on windows")
 )
 
-func setRunAs(process *exec.Cmd, runAsUser string) error {
+func setRunAs(*exec.Cmd, string) error {
 	return errNotSupported
 }
 
-func chown(file string, runAsUser string) error {
+func chown(string, string) error {
 	return errNotSupported
 }
