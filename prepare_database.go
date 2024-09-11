@@ -18,10 +18,10 @@ const (
 	fmtAfterError  = "%v happened after error: %w"
 )
 
-type initDatabase func(binaryExtractLocation, runtimePath, pgDataDir, username, password, locale string, encoding string, logger *os.File) error
+type initDatabase func(binaryExtractLocation, runtimePath, pgDataDir, runAsUser, username, password, locale, encoding string, logger *os.File) error
 type createDatabase func(port uint32, username, password, database string) error
 
-func defaultInitDatabase(binaryExtractLocation, runtimePath, pgDataDir, username, password, locale string, encoding string, logger *os.File) error {
+func defaultInitDatabase(binaryExtractLocation, runtimePath, pgDataDir, runAsUser, username, password, locale, encoding string, logger *os.File) error {
 	passwordFile, err := createPasswordFile(runtimePath, password)
 	if err != nil {
 		return err
@@ -46,6 +46,40 @@ func defaultInitDatabase(binaryExtractLocation, runtimePath, pgDataDir, username
 	postgresInitDBProcess := exec.Command(postgresInitDBBinary, args...)
 	postgresInitDBProcess.Stderr = logger
 	postgresInitDBProcess.Stdout = logger
+
+	if runAsUser != "" {
+		err = chown(passwordFile, runAsUser)
+		if err != nil {
+			return err
+		}
+
+		err = chown(runtimePath, runAsUser)
+		if err != nil {
+			return err
+		}
+
+		err = setRunAs(postgresInitDBProcess, runAsUser)
+		if err != nil {
+			return err
+		}
+	}
+
+	if runAsUser != "" {
+		err = chown(passwordFile, runAsUser)
+		if err != nil {
+			return err
+		}
+
+		err = chown(runtimePath, runAsUser)
+		if err != nil {
+			return err
+		}
+
+		err = setRunAs(postgresInitDBProcess, runAsUser)
+		if err != nil {
+			return err
+		}
+	}
 
 	if err = postgresInitDBProcess.Run(); err != nil {
 		logContent, readLogsErr := readLogsOrTimeout(logger) // we want to preserve the original error
